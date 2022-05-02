@@ -63,7 +63,9 @@ Or the following command to update an existing version:
 
 Usage Example
 =============
+
 .. code-block:: shell
+
     import time
     import board
     import busio
