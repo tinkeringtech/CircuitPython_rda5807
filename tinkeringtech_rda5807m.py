@@ -103,7 +103,7 @@ class Radio:
         chip's address
     maxvolume : int
         maximum volume
-    freqLow, freqHigh, freqSteps : int
+    freq_low, freq_high, freq_steps : int
         min and max frequency for FM band, and frequency steps
     board : busio.i2c object
         used for i2c communication
@@ -111,11 +111,11 @@ class Radio:
         current chip frequency
     volume : int
         current chip volume
-    bassBoost : boolean
+    bass_boost : boolean
         toggle bass boost on the chip
     mute : boolean
         toggle mute/unmute
-    softMute : boolean
+    soft_mute : boolean
         toggle soft mute (mute if signal strength too low)
     mono : boolean
         toggle stereo mode
@@ -135,9 +135,9 @@ class Radio:
     maxvolume = 15
 
     # FMWORLD Band
-    freqLow = 8700
-    freqHigh = 10800
-    freqSteps = 10
+    freq_low = 8700
+    freq_high = 10800
+    freq_steps = 10
 
     # Set default frequency and volume
     def __init__(self, board, frequency=10000, volume=1):
@@ -146,18 +146,19 @@ class Radio:
 
         # Basic audio info
         self.volume = volume
-        self.bassBoost = False
+        self.bass_boost = False
         self.mute = False
-        self.softMute = False
+        self.soft_mute = False
 
         # Radio features from the chip
         self.mono = False
         self.rds = False
         self.tuned = False
+        self.send_rds = False
 
         # Is the signal strong enough to get rds?
-        self.rdsReady = False
-        self.rdsThreshold = 10  # rssi threshold for accepting rds - change this to value most appropriate
+        self.rds_ready = False
+        self.rds_threshold = 10  # rssi threshold for accepting rds - change as needed
         self.interval = 10  # Used for timing rssi checks - in seconds
         self.initial = time.monotonic()  # Time since boot
 
@@ -182,8 +183,8 @@ class Radio:
         self.registers[RADIO_REG_VOL] = 0x84D1
         # Other registers are already set to zero
         # Update registers
-        self.saveRegister(RADIO_REG_CTRL)
-        self.saveRegister(RADIO_REG_VOL)
+        self.save_register(RADIO_REG_CTRL)
+        self.save_register(RADIO_REG_VOL)
 
         self.registers[RADIO_REG_CTRL] = (
             RADIO_REG_CTRL_ENABLE
@@ -192,31 +193,31 @@ class Radio:
             | RADIO_REG_CTRL_UNMUTE
             | RADIO_REG_CTRL_OUTPUT
         )
-        self.saveRegister(RADIO_REG_CTRL)
+        self.save_register(RADIO_REG_CTRL)
 
         # Turn on bass boost and rds
-        self.setBassBoost(True)
+        self.set_bass_boost(True)
 
         self.rds = True
         self.mute = False
 
     def tune(self):
         # Tunes radio to current frequency and volume
-        self.setFreq(self.frequency)
-        self.setVolume(self.volume)
+        self.set_freq(self.frequency)
+        self.set_volume(self.volume)
         self.tuned = True
 
-    def setFreq(self, freq):
+    def set_freq(self, freq):
         # Sets frequency to freq
-        if freq < self.freqLow:
-            freq = self.freqLow
-        elif freq > self.freqHigh:
-            freq = self.freqHigh
+        if freq < self.freq_low:
+            freq = self.freq_low
+        elif freq > self.freq_high:
+            freq = self.freq_high
         self.frequency = freq
-        newChannel = (freq - self.freqLow) // 10
+        new_channel = (freq - self.freq_low) // 10
 
-        regChannel = RADIO_REG_CHAN_TUNE  # Enable tuning
-        regChannel = regChannel | (newChannel << 6)
+        reg_channel = RADIO_REG_CHAN_TUNE  # Enable tuning
+        reg_channel = reg_channel | (new_channel << 6)
 
         # Enable output, unmute
         self.registers[RADIO_REG_CTRL] = self.registers[RADIO_REG_CTRL] | (
@@ -225,48 +226,48 @@ class Radio:
             | RADIO_REG_CTRL_RDS
             | RADIO_REG_CTRL_ENABLE
         )
-        self.saveRegister(RADIO_REG_CTRL)
+        self.save_register(RADIO_REG_CTRL)
 
         # Save frequency to register
-        self.registers[RADIO_REG_CHAN] = regChannel
-        self.saveRegister(RADIO_REG_CHAN)
+        self.registers[RADIO_REG_CHAN] = reg_channel
+        self.save_register(RADIO_REG_CHAN)
         time.sleep(0.2)
 
         # Adjust volume
-        self.saveRegister(RADIO_REG_VOL)
+        self.save_register(RADIO_REG_VOL)
         time.sleep(0.3)
 
         # Get frequnecy
-        self.getFreq()
+        self.get_freq()
 
-        if self.getRssi() > self.rdsThreshold:
-            self.rdsReady = True
+        if self.get_rssi() > self.rds_threshold:
+            self.rds_ready = True
         else:
-            self.rdsReady = False
+            self.rds_ready = False
 
-    def getFreq(self):
+    def get_freq(self):
         # Read register RA
-        self.writeBytes(bytes([RADIO_REG_RA]))
+        self.write_bytes(bytes([RADIO_REG_RA]))
         self.registers[RADIO_REG_RA] = self.read16()
 
-        ch = self.registers[RADIO_REG_RA] & RADIO_REG_RA_NR
+        chnl = self.registers[RADIO_REG_RA] & RADIO_REG_RA_NR
 
-        self.frequency = self.freqLow + ch * 10
+        self.frequency = self.freq_low + chnl * 10
         return self.frequency
 
-    def formatFreq(self):
+    def format_freq(self):
         # Formats the current frequency for better readabilitiy
         freq = self.frequency
 
-        s = str(freq)
-        s = list(s)
-        last_two = s[-2:]
-        s[-2] = "."
-        s[-1] = last_two[0]
-        s.append(last_two[1])
-        return ("".join(s)) + " Mhz"
+        sfreq = str(freq)
+        sfreq = list(sfreq)
+        last_two = sfreq[-2:]
+        sfreq[-2] = "."
+        sfreq[-1] = last_two[0]
+        sfreq.append(last_two[1])
+        return ("".join(sfreq)) + " Mhz"
 
-    def setBand(self, band):
+    def set_band(self, band):
         # Changes bands to FM or FMWORLD
         self.band = band
         if band == "FM":
@@ -274,32 +275,32 @@ class Radio:
         else:
             r = RADIO_REG_CHAN_BAND_FMWORLD
         self.registers[RADIO_REG_CHAN] = r | RADIO_REG_CHAN_SPACE_100
-        self.saveRegister(RADIO_REG_CHAN)
+        self.save_register(RADIO_REG_CHAN)
 
     def term(self):
         # Terminates all receiver functions
-        self.setVolume(0)
+        self.set_volume(0)
         self.registers[RADIO_REG_CTRL] = 0x0000
-        self.saveRegisters
+        self.save_registers
 
-    def setBassBoost(self, switchOn):
+    def set_bass_boost(self, switch_on):
         # Switches bass boost to true or false
-        self.bassBoost = switchOn
-        regCtrl = self.registers[RADIO_REG_CTRL]
-        if switchOn:
-            regCtrl = regCtrl | RADIO_REG_CTRL_BASS
+        self.bass_boost = switch_on
+        reg_ctrl = self.registers[RADIO_REG_CTRL]
+        if switch_on:
+            reg_ctrl = reg_ctrl | RADIO_REG_CTRL_BASS
         else:
-            regCtrl = regCtrl & (~RADIO_REG_CTRL_BASS)
-        self.registers[RADIO_REG_CTRL] = regCtrl
-        self.saveRegister(RADIO_REG_CTRL)
+            reg_ctrl = reg_ctrl & (~RADIO_REG_CTRL_BASS)
+        self.registers[RADIO_REG_CTRL] = reg_ctrl
+        self.save_register(RADIO_REG_CTRL)
 
-    def setMono(self, switchOn):
+    def set_mono(self, switch_on):
         # Switches mono to 0 or 1
-        self.mono = switchOn
+        self.mono = switch_on
         self.registers[RADIO_REG_CTRL] = self.registers[RADIO_REG_CTRL] & (
             ~RADIO_REG_CTRL_SEEK
         )
-        if switchOn:
+        if switch_on:
             self.registers[RADIO_REG_CTRL] = (
                 self.registers[RADIO_REG_CTRL] | RADIO_REG_CTRL_MONO
             )
@@ -307,12 +308,12 @@ class Radio:
             self.registers[RADIO_REG_CTRL] = self.registers[RADIO_REG_CTRL] & (
                 ~RADIO_REG_CTRL_MONO
             )
-        self.saveRegister(RADIO_REG_CTRL)
+        self.save_register(RADIO_REG_CTRL)
 
-    def setMute(self, switchOn):
+    def set_mute(self, switch_on):
         # Switches mute off or on
-        self.mute = switchOn
-        if switchOn:
+        self.mute = switch_on
+        if switch_on:
             self.registers[RADIO_REG_CTRL] = self.registers[RADIO_REG_CTRL] & (
                 ~RADIO_REG_CTRL_UNMUTE
             )
@@ -320,12 +321,12 @@ class Radio:
             self.registers[RADIO_REG_CTRL] = (
                 self.registers[RADIO_REG_CTRL] | RADIO_REG_CTRL_UNMUTE
             )
-        self.saveRegister(RADIO_REG_CTRL)
+        self.save_register(RADIO_REG_CTRL)
 
-    def setSoftMute(self, switchOn):
+    def set_soft_mute(self, switch_on):
         # Switches soft mute off or on
-        self.softMute = switchOn
-        if switchOn:
+        self.soft_mute = switch_on
+        if switch_on:
             self.registers[RADIO_REG_R4] = (
                 self.registers[RADIO_REG_R4] | RADIO_REG_R4_SOFTMUTE
             )
@@ -333,21 +334,21 @@ class Radio:
             self.registers[RADIO_REG_R4] = self.registers[RADIO_REG_R4] & (
                 ~RADIO_REG_R4_SOFTMUTE
             )
-        self.saveRegister(RADIO_REG_R4)
+        self.save_register(RADIO_REG_R4)
 
-    def softReset(self):
+    def soft_reset(self):
         # Soft reset chip
         self.registers[RADIO_REG_CTRL] = (
             self.registers[RADIO_REG_CTRL] | RADIO_REG_CTRL_RESET
         )
-        self.saveRegister(RADIO_REG_CTRL)
+        self.save_register(RADIO_REG_CTRL)
         time.sleep(2)
         self.registers[RADIO_REG_CTRL] = self.registers[RADIO_REG_CTRL] & (
             ~RADIO_REG_CTRL_RESET
         )
-        self.saveRegister(RADIO_REG_CTRL)
+        self.save_register(RADIO_REG_CTRL)
 
-    def seekUp(self):
+    def seek_up(self):
         # Start seek mode upwards
         self.registers[RADIO_REG_CTRL] = (
             self.registers[RADIO_REG_CTRL] | RADIO_REG_CTRL_SEEKUP
@@ -355,17 +356,17 @@ class Radio:
         self.registers[RADIO_REG_CTRL] = (
             self.registers[RADIO_REG_CTRL] | RADIO_REG_CTRL_SEEK
         )
-        self.saveRegister(RADIO_REG_CTRL)
+        self.save_register(RADIO_REG_CTRL)
 
         # Wait until scan is over
         time.sleep(1)
-        self.getFreq()
+        self.get_freq()
         self.registers[RADIO_REG_CTRL] = self.registers[RADIO_REG_CTRL] & (
             ~RADIO_REG_CTRL_SEEK
         )
-        self.saveRegister(RADIO_REG_CTRL)
+        self.save_register(RADIO_REG_CTRL)
 
-    def seekDown(self):
+    def seek_down(self):
         # Start seek mode downwards
         self.registers[RADIO_REG_CTRL] = self.registers[RADIO_REG_CTRL] & (
             ~RADIO_REG_CTRL_SEEKUP
@@ -373,17 +374,17 @@ class Radio:
         self.registers[RADIO_REG_CTRL] = (
             self.registers[RADIO_REG_CTRL] | RADIO_REG_CTRL_SEEK
         )
-        self.saveRegister(RADIO_REG_CTRL)
+        self.save_register(RADIO_REG_CTRL)
 
         # Wait until scan is over
         time.sleep(1)
-        self.getFreq()
+        self.get_freq()
         self.registers[RADIO_REG_CTRL] = self.registers[RADIO_REG_CTRL] & (
             ~RADIO_REG_CTRL_SEEK
         )
-        self.saveRegister(RADIO_REG_CTRL)
+        self.save_register(RADIO_REG_CTRL)
 
-    def setVolume(self, volume):
+    def set_volume(self, volume):
         # Sets the volume
         if volume > self.maxvolume:
             volume = self.maxvolume
@@ -392,68 +393,68 @@ class Radio:
             ~RADIO_REG_VOL_VOL
         )
         self.registers[RADIO_REG_VOL] = self.registers[RADIO_REG_VOL] | volume
-        self.saveRegister(RADIO_REG_VOL)
+        self.save_register(RADIO_REG_VOL)
 
-    def checkRDS(self):
+    def check_rds(self):
         # Check for rds data
-        self.checkThreshold()
-        if self.sendRDS and self.rdsReady:
+        self.check_threshold()
+        if self.send_rds and self.rds_ready:
             self.registers[RADIO_REG_RA] = self.read16()
 
             if self.registers[RADIO_REG_RA] & RADIO_REG_RA_RDS:
                 # Check for new RDS data available
                 result = False
 
-                self.writeBytes(bytes([RADIO_REG_RDSA]))
+                self.write_bytes(bytes([RADIO_REG_RDSA]))
 
-                newData = self.read16()
-                if newData != self.registers[RADIO_REG_RDSA]:
-                    self.registers[RADIO_REG_RDSA] = newData
+                new_data = self.read16()
+                if new_data != self.registers[RADIO_REG_RDSA]:
+                    self.registers[RADIO_REG_RDSA] = new_data
                     result = True
 
-                newData = self.read16()
-                if newData != self.registers[RADIO_REG_RDSB]:
-                    self.registers[RADIO_REG_RDSB] = newData
+                new_data = self.read16()
+                if new_data != self.registers[RADIO_REG_RDSB]:
+                    self.registers[RADIO_REG_RDSB] = new_data
                     result = True
 
-                newData = self.read16()
-                if newData != self.registers[RADIO_REG_RDSC]:
-                    self.registers[RADIO_REG_RDSC] = newData
+                new_data = self.read16()
+                if new_data != self.registers[RADIO_REG_RDSC]:
+                    self.registers[RADIO_REG_RDSC] = new_data
                     result = True
 
-                newData = self.read16()
-                if newData != self.registers[RADIO_REG_RDSD]:
-                    self.registers[RADIO_REG_RDSD] = newData
+                new_data = self.read16()
+                if new_data != self.registers[RADIO_REG_RDSD]:
+                    self.registers[RADIO_REG_RDSD] = new_data
                     result = True
 
                 if result:
-                    self.sendRDS(
+                    self.send_rds(
                         self.registers[RADIO_REG_RDSA],
                         self.registers[RADIO_REG_RDSB],
                         self.registers[RADIO_REG_RDSC],
                         self.registers[RADIO_REG_RDSD],
                     )
 
-    def checkThreshold(self):
+    def check_threshold(self):
         # Check every interval if the signal strength is strong enough for receiving rds data
-        currentTime = time.monotonic()
-        if (currentTime - self.initial) > self.interval:
-            if self.getRssi() >= self.rdsThreshold:
-                self.rdsReady = True
+        current_time = time.monotonic()
+        if (current_time - self.initial) > self.interval:
+            if self.get_rssi() >= self.rds_threshold:
+                self.rds_ready = True
             else:
-                self.rdsReady = False
-            self.initial = currentTime
+                self.rds_ready = False
+            self.initial = current_time
 
-    def getRssi(self):
+    def get_rssi(self):
         # Get the current signal strength
-        self.writeBytes(bytes([RADIO_REG_RB]))
+        self.write_bytes(bytes([RADIO_REG_RB]))
         self.registers[RADIO_REG_RB] = self.read16()
         self.rssi = self.registers[RADIO_REG_RB] >> 10
         return self.rssi
 
-    def getRadioInfo(self):
+    def get_radio_info(self):
         # Reads info from chip and saves it into virtual memory
-        self.readRegisters()
+        self.read_registers()
         if self.registers[RADIO_REG_RA] & RADIO_REG_RA_RDS:
             self.rds = True
         self.rssi = self.registers[RADIO_REG_RB] >> 10
@@ -462,21 +463,23 @@ class Radio:
         if self.registers[RADIO_REG_CTRL] & RADIO_REG_CTRL_MONO:
             self.mono = True
 
-    def saveRegister(self, regN):
+    def save_register(self, reg_num):
         # Write register from memory to receiver
-        regVal = self.registers[regN]  # 16 bit value in list
-        regVal1 = regVal >> 8
-        regVal2 = regVal & 255
+        reg_val = self.registers[reg_num]  # 16 bit value in list
+        reg_val_1 = reg_val >> 8
+        reg_val_2 = reg_val & 255
 
-        self.writeBytes(bytes([regN, regVal1, regVal2]))  # regN is a register address
+        self.write_bytes(
+            bytes([reg_num, reg_val_1, reg_val_2])
+        )  # reg_num is a register address
 
-    def writeBytes(self, values):
+    def write_bytes(self, values):
         with self.board:
             self.board.write(values)
 
-    def saveRegisters(self):
+    def save_registers(self):
         for i in range(2, 7):
-            self.saveRegister(i)
+            self.save_register(i)
 
     def read16(self):
         # Reads two bytes, returns as one 16 bit integer
@@ -485,7 +488,7 @@ class Radio:
             self.board.readinto(result)
         return result[0] * 256 + result[1]
 
-    def readRegisters(self):
+    def read_registers(self):
         # Reads register from chip to virtual memory
         with self.board:
             self.board.write(bytes([RADIO_REG_RA]))
@@ -493,7 +496,7 @@ class Radio:
                 self.registers[0xA + i] = self.read16()
 
 
-def replaceElement(index, text, newchar):
+def replace_element(index, text, newchar):
     # Replaces char in string at index with newchar
     newlist = list(text)
     if type(newchar) is int:
@@ -513,112 +516,112 @@ class RDSParser:
 
     def __init__(self):
         # RDS Values
-        self.rdsGroupType = None
+        self.rds_group_type = None
         # Traffic programme
-        self.rdsTP = None
+        self.rds_tp = None
         # Program type
-        self.rdsPTY = None
+        self.rds_pty = None
         # RDS text chars get stored here
-        self.textAB = None
-        self.last_textAB = None
+        self.text_ab = None
+        self.last_text_ab = None
         # Time
-        self.lastMinutes1 = 0
-        self.lastMinutes2 = 0
+        self.last_minutes_1 = 0
+        self.last_minutes_2 = 0
         # Previous index
-        self.lastTextIDX = 0
+        self.last_text_idx = "tonga"
         # Functions initialization
-        self.sendServiceName = None
-        self.sendText = None
-        self.sendTime = None
+        self.send_service_name = None
+        self.send_text = None
+        self.send_time = None
         # Radio text
-        self.RDSText = " " * 66
+        self.rds_text = " " * 66
         # Station names
-        self.PSName1 = "--------"
-        self.PSName2 = self.PSName1
-        self.programServiceName = "        "
+        self.ps_name1 = "--------"
+        self.ps_name2 = self.ps_name1
+        self.program_service_name = "        "
 
     def init(self):
-        self.RDSText = " " * 66
-        self.PSName1 = "--------"
-        self.PSName2 = self.PSName1
-        self.programServiceName = "        "
-        self.lastTextIDX = 0
+        self.rds_text = " " * 66
+        self.ps_name1 = "--------"
+        self.ps_name2 = self.ps_name1
+        self.program_service_name = "        "
+        self.last_text_idx = 0
 
-    def attachServicenNameCallback(self, newFunction):
-        self.sendServiceName = newFunction
+    def attach_service_name_callback(self, new_function):
+        self.send_service_name = new_function
 
-    def attachTextCallback(self, newFunction):
-        self.sendText = newFunction
+    def attach_text_callback(self, new_function):
+        self.send_text = new_function
 
-    def attachTimeCallback(self, newFunction):
-        self.sendTime = newFunction
+    def attach_time_callback(self, new_function):
+        self.send_time = new_function
 
-    def processData(self, block1, block2, block3, block4):
+    def process_data(self, block1, block2, block3, block4):
 
         # Analyzing block 1
         if block1 == 0:
             # If block1 set to zero, reset all RDS info
             self.init()
-            if self.sendServiceName:
-                self.sendServiceName(self.programServiceName)
-            if self.sendText:
-                self.sendText("")
+            if self.send_service_name:
+                self.send_service_name(self.program_service_name)
+            if self.send_text:
+                self.send_text("")
             return 0
 
         # Block 2
-        rdsGroupType = 0x0A | ((block2 & 0xF000) >> 8) | ((block2 & 0x0800) >> 11)
-        self.rdsTP = block2 & 0x0400
-        self.rdsPTY = block2 & 0x0400
+        rds_group_type = 0x0A | ((block2 & 0xF000) >> 8) | ((block2 & 0x0800) >> 11)
+        self.rds_tp = block2 & 0x0400
+        self.rds_pty = block2 & 0x0400
 
         # rdsGroupType cases
-        if rdsGroupType == 0x0A:
+        if rds_group_type == 0x0A:
             pass
 
-        elif rdsGroupType == 0x0B:
+        elif rds_group_type == 0x0B:
             # Data received is part of Service Station name
             idx = 2 * (block2 & 0x0003)
 
-            c1 = block4 >> 8
-            c2 = block4 & 0x00FF
+            cdata_1 = block4 >> 8
+            cdata_2 = block4 & 0x00FF
 
             # Check that the data was successfuly received
-            if (self.PSName1[idx] == c1) and (self.PSName1[idx + 1] == c2):
-                self.PSName2 = replaceElement(idx, self.PSName2, c1)
-                self.PSName2 = replaceElement(idx + 1, self.PSName2, c2)
-                if (idx == 6) and (self.PSName2 == self.PSName1):
-                    if self.programServiceName != self.PSName2:
+            if (self.ps_name1[idx] == cdata_1) and (self.ps_name1[idx + 1] == cdata_2):
+                self.ps_name2 = replace_element(idx, self.ps_name2, cdata_1)
+                self.ps_name2 = replace_element(idx + 1, self.ps_name2, cdata_2)
+                if (idx == 6) and (self.ps_name2 == self.ps_name1):
+                    if self.program_service_name != self.ps_name2:
                         # Publish station name
-                        self.programServiceName = self.PSName2
-                        if self.sendServiceName:
-                            self.sendServiceName(self.programServiceName)
+                        self.program_service_name = self.ps_name2
+                        if self.send_service_name:
+                            self.send_service_name(self.program_service_name)
 
-            if (self.PSName1[idx] != c1) or (self.PSName1[idx + 1] != c2):
-                self.PSName1 = replaceElement(idx, self.PSName1, c1)
-                self.PSName1 = replaceElement(idx + 1, self.PSName1, c2)
+            if (self.ps_name1[idx] != cdata_1) or (self.ps_name1[idx + 1] != cdata_2):
+                self.ps_name1 = replace_element(idx, self.ps_name1, cdata_1)
+                self.ps_name1 = replace_element(idx + 1, self.ps_name1, cdata_2)
 
-        elif rdsGroupType == 0x2A:
+        elif rds_group_type == 0x2A:
             time.sleep(0.1)
-            self.textAB = block2 & 0x0010
+            self.text_ab = block2 & 0x0010
             idx = 4 * (block2 & 0x000F)
-            if idx < self.lastTextIDX:
-                if self.sendText:
-                    self.sendText(self.RDSText)
-            self.lastTextIDX = idx
+            if idx < self.last_text_idx:
+                if self.send_text:
+                    self.send_text(self.rds_text)
+            self.last_text_idx = idx
 
-            if self.textAB != self.last_textAB:
+            if self.text_ab != self.last_text_ab:
                 # Clear buffer
-                self.last_textAB = self.textAB
-                self.RDSText = " " * 66
+                self.last_text_ab = self.text_ab
+                self.rds_text = " " * 66
 
-            self.RDSText = replaceElement(idx, self.RDSText, block3 >> 8)
+            self.rds_text = replace_element(idx, self.rds_text, block3 >> 8)
             idx += 1
-            self.RDSText = replaceElement(idx, self.RDSText, block3 & 0x00FF)
+            self.rds_text = replace_element(idx, self.rds_text, block3 & 0x00FF)
             idx += 1
-            self.RDSText = replaceElement(idx, self.RDSText, block4 >> 8)
+            self.rds_text = replace_element(idx, self.rds_text, block4 >> 8)
             idx += 1
-            self.RDSText = replaceElement(idx, self.RDSText, block4 & 0x00FF)
+            self.rds_text = replace_element(idx, self.rds_text, block4 & 0x00FF)
             idx += 1
-        elif rdsGroupType == 0x4A:
+        elif rds_group_type == 0x4A:
             time.sleep(0.1)
             off = (block4) & 0x3F
             mins = (block4 >> 6) & 0x3F
@@ -629,14 +632,14 @@ class RDSParser:
                 mins += 30 * (off & 0x1F)
 
             # Check if function sendTime was set, and chek if the time is different from last time
-            if (self.sendTime) and (mins != self.lastMinutes1):
+            if (self.send_time) and (mins != self.last_minutes_1):
                 # Checks if time appeared in the last two instances - To avoid noise
                 if (
-                    self.lastMinutes1 + 1 == mins
-                    or self.lastMinutes2 + 1 == mins
-                    or self.lastMinutes1 == 0
-                    or self.lastMinutes2 == 0
+                    self.last_minutes_1 + 1 == mins
+                    or self.last_minutes_2 + 1 == mins
+                    or self.last_minutes_1 == 0
+                    or self.last_minutes_2 == 0
                 ):
-                    self.lastMinutes2 = self.lastMinutes1
-                    self.lastMinutes1 = mins
-                    self.sendTime(mins // 60, mins % 60)
+                    self.last_minutes_2 = self.last_minutes_1
+                    self.last_minutes_1 = mins
+                    self.send_time(mins // 60, mins % 60)
