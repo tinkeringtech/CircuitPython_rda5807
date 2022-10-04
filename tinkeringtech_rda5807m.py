@@ -174,8 +174,9 @@ class Radio:
     def setup(self):
         # Initialize registers
         self.registers[RADIO_REG_CHIPID] = 0x58
-        self.registers[RADIO_REG_CTRL] = (RADIO_REG_CTRL_RESET | RADIO_REG_CTRL_ENABLE) | (
-                RADIO_REG_CTRL_UNMUTE | RADIO_REG_CTRL_OUTPUT)
+        self.registers[RADIO_REG_CTRL] = (
+            RADIO_REG_CTRL_RESET | RADIO_REG_CTRL_ENABLE
+        ) | (RADIO_REG_CTRL_UNMUTE | RADIO_REG_CTRL_OUTPUT)
         # self.registers[RADIO_REG_R4] = RADIO_REG_R4_EM50
         # Initialized to volume - 6 by default
         self.registers[RADIO_REG_VOL] = 0x84D1
@@ -184,8 +185,13 @@ class Radio:
         self.saveRegister(RADIO_REG_CTRL)
         self.saveRegister(RADIO_REG_VOL)
 
-        self.registers[
-            RADIO_REG_CTRL] = RADIO_REG_CTRL_ENABLE | RADIO_REG_CTRL_NEW | RADIO_REG_CTRL_RDS | RADIO_REG_CTRL_UNMUTE | RADIO_REG_CTRL_OUTPUT
+        self.registers[RADIO_REG_CTRL] = (
+            RADIO_REG_CTRL_ENABLE
+            | RADIO_REG_CTRL_NEW
+            | RADIO_REG_CTRL_RDS
+            | RADIO_REG_CTRL_UNMUTE
+            | RADIO_REG_CTRL_OUTPUT
+        )
         self.saveRegister(RADIO_REG_CTRL)
 
         # Turn on bass boost and rds
@@ -214,7 +220,11 @@ class Radio:
 
         # Enable output, unmute
         self.registers[RADIO_REG_CTRL] = self.registers[RADIO_REG_CTRL] | (
-                RADIO_REG_CTRL_OUTPUT | RADIO_REG_CTRL_UNMUTE | RADIO_REG_CTRL_RDS | RADIO_REG_CTRL_ENABLE)
+            RADIO_REG_CTRL_OUTPUT
+            | RADIO_REG_CTRL_UNMUTE
+            | RADIO_REG_CTRL_RDS
+            | RADIO_REG_CTRL_ENABLE
+        )
         self.saveRegister(RADIO_REG_CTRL)
 
         # Save frequency to register
@@ -263,7 +273,7 @@ class Radio:
             r = RADIO_REG_CHAN_BAND_FM
         else:
             r = RADIO_REG_CHAN_BAND_FMWORLD
-        self.registers[RADIO_REG_CHAN] = (r | RADIO_REG_CHAN_SPACE_100)
+        self.registers[RADIO_REG_CHAN] = r | RADIO_REG_CHAN_SPACE_100
         self.saveRegister(RADIO_REG_CHAN)
 
     def term(self):
@@ -286,69 +296,101 @@ class Radio:
     def setMono(self, switchOn):
         # Switches mono to 0 or 1
         self.mono = switchOn
-        self.registers[RADIO_REG_CTRL] = self.registers[RADIO_REG_CTRL] & (~RADIO_REG_CTRL_SEEK)
+        self.registers[RADIO_REG_CTRL] = self.registers[RADIO_REG_CTRL] & (
+            ~RADIO_REG_CTRL_SEEK
+        )
         if switchOn:
-            self.registers[RADIO_REG_CTRL] = self.registers[RADIO_REG_CTRL] | RADIO_REG_CTRL_MONO
+            self.registers[RADIO_REG_CTRL] = (
+                self.registers[RADIO_REG_CTRL] | RADIO_REG_CTRL_MONO
+            )
         else:
-            self.registers[RADIO_REG_CTRL] = self.registers[RADIO_REG_CTRL] & (~RADIO_REG_CTRL_MONO)
+            self.registers[RADIO_REG_CTRL] = self.registers[RADIO_REG_CTRL] & (
+                ~RADIO_REG_CTRL_MONO
+            )
         self.saveRegister(RADIO_REG_CTRL)
 
     def setMute(self, switchOn):
         # Switches mute off or on
         self.mute = switchOn
-        if (switchOn):
-            self.registers[RADIO_REG_CTRL] = self.registers[RADIO_REG_CTRL] & (~RADIO_REG_CTRL_UNMUTE)
+        if switchOn:
+            self.registers[RADIO_REG_CTRL] = self.registers[RADIO_REG_CTRL] & (
+                ~RADIO_REG_CTRL_UNMUTE
+            )
         else:
-            self.registers[RADIO_REG_CTRL] = self.registers[RADIO_REG_CTRL] | RADIO_REG_CTRL_UNMUTE
+            self.registers[RADIO_REG_CTRL] = (
+                self.registers[RADIO_REG_CTRL] | RADIO_REG_CTRL_UNMUTE
+            )
         self.saveRegister(RADIO_REG_CTRL)
 
     def setSoftMute(self, switchOn):
         # Switches soft mute off or on
         self.softMute = switchOn
         if switchOn:
-            self.registers[RADIO_REG_R4] = self.registers[RADIO_REG_R4] | RADIO_REG_R4_SOFTMUTE
+            self.registers[RADIO_REG_R4] = (
+                self.registers[RADIO_REG_R4] | RADIO_REG_R4_SOFTMUTE
+            )
         else:
-            self.registers[RADIO_REG_R4] = self.registers[RADIO_REG_R4] & (~RADIO_REG_R4_SOFTMUTE)
+            self.registers[RADIO_REG_R4] = self.registers[RADIO_REG_R4] & (
+                ~RADIO_REG_R4_SOFTMUTE
+            )
         self.saveRegister(RADIO_REG_R4)
 
     def softReset(self):
         # Soft reset chip
-        self.registers[RADIO_REG_CTRL] = self.registers[RADIO_REG_CTRL] | RADIO_REG_CTRL_RESET
+        self.registers[RADIO_REG_CTRL] = (
+            self.registers[RADIO_REG_CTRL] | RADIO_REG_CTRL_RESET
+        )
         self.saveRegister(RADIO_REG_CTRL)
         time.sleep(2)
-        self.registers[RADIO_REG_CTRL] = self.registers[RADIO_REG_CTRL] & (~RADIO_REG_CTRL_RESET)
+        self.registers[RADIO_REG_CTRL] = self.registers[RADIO_REG_CTRL] & (
+            ~RADIO_REG_CTRL_RESET
+        )
         self.saveRegister(RADIO_REG_CTRL)
 
     def seekUp(self):
         # Start seek mode upwards
-        self.registers[RADIO_REG_CTRL] = self.registers[RADIO_REG_CTRL] | RADIO_REG_CTRL_SEEKUP
-        self.registers[RADIO_REG_CTRL] = self.registers[RADIO_REG_CTRL] | RADIO_REG_CTRL_SEEK
+        self.registers[RADIO_REG_CTRL] = (
+            self.registers[RADIO_REG_CTRL] | RADIO_REG_CTRL_SEEKUP
+        )
+        self.registers[RADIO_REG_CTRL] = (
+            self.registers[RADIO_REG_CTRL] | RADIO_REG_CTRL_SEEK
+        )
         self.saveRegister(RADIO_REG_CTRL)
 
         # Wait until scan is over
         time.sleep(1)
         self.getFreq()
-        self.registers[RADIO_REG_CTRL] = self.registers[RADIO_REG_CTRL] & (~RADIO_REG_CTRL_SEEK)
+        self.registers[RADIO_REG_CTRL] = self.registers[RADIO_REG_CTRL] & (
+            ~RADIO_REG_CTRL_SEEK
+        )
         self.saveRegister(RADIO_REG_CTRL)
 
     def seekDown(self):
         # Start seek mode downwards
-        self.registers[RADIO_REG_CTRL] = self.registers[RADIO_REG_CTRL] & (~RADIO_REG_CTRL_SEEKUP)
-        self.registers[RADIO_REG_CTRL] = self.registers[RADIO_REG_CTRL] | RADIO_REG_CTRL_SEEK
+        self.registers[RADIO_REG_CTRL] = self.registers[RADIO_REG_CTRL] & (
+            ~RADIO_REG_CTRL_SEEKUP
+        )
+        self.registers[RADIO_REG_CTRL] = (
+            self.registers[RADIO_REG_CTRL] | RADIO_REG_CTRL_SEEK
+        )
         self.saveRegister(RADIO_REG_CTRL)
 
         # Wait until scan is over
         time.sleep(1)
         self.getFreq()
-        self.registers[RADIO_REG_CTRL] = self.registers[RADIO_REG_CTRL] & (~RADIO_REG_CTRL_SEEK)
+        self.registers[RADIO_REG_CTRL] = self.registers[RADIO_REG_CTRL] & (
+            ~RADIO_REG_CTRL_SEEK
+        )
         self.saveRegister(RADIO_REG_CTRL)
 
     def setVolume(self, volume):
         # Sets the volume
-        if (volume > self.maxvolume):
+        if volume > self.maxvolume:
             volume = self.maxvolume
         self.volume = volume
-        self.registers[RADIO_REG_VOL] = self.registers[RADIO_REG_VOL] & (~RADIO_REG_VOL_VOL)
+        self.registers[RADIO_REG_VOL] = self.registers[RADIO_REG_VOL] & (
+            ~RADIO_REG_VOL_VOL
+        )
         self.registers[RADIO_REG_VOL] = self.registers[RADIO_REG_VOL] | volume
         self.saveRegister(RADIO_REG_VOL)
 
@@ -358,7 +400,7 @@ class Radio:
         if self.sendRDS and self.rdsReady:
             self.registers[RADIO_REG_RA] = self.read16()
 
-            if (self.registers[RADIO_REG_RA] & RADIO_REG_RA_RDS):
+            if self.registers[RADIO_REG_RA] & RADIO_REG_RA_RDS:
                 # Check for new RDS data available
                 result = False
 
@@ -385,8 +427,12 @@ class Radio:
                     result = True
 
                 if result:
-                    self.sendRDS(self.registers[RADIO_REG_RDSA], self.registers[RADIO_REG_RDSB],
-                                 self.registers[RADIO_REG_RDSC], self.registers[RADIO_REG_RDSD])
+                    self.sendRDS(
+                        self.registers[RADIO_REG_RDSA],
+                        self.registers[RADIO_REG_RDSB],
+                        self.registers[RADIO_REG_RDSC],
+                        self.registers[RADIO_REG_RDSD],
+                    )
 
     def checkThreshold(self):
         # Check every interval if the signal strength is strong enough for receiving rds data
@@ -536,7 +582,7 @@ class RDSParser:
             c2 = block4 & 0x00FF
 
             # Check that the data was successfuly received
-            if ((self.PSName1[idx] == c1) and (self.PSName1[idx + 1] == c2)):
+            if (self.PSName1[idx] == c1) and (self.PSName1[idx + 1] == c2):
                 self.PSName2 = replaceElement(idx, self.PSName2, c1)
                 self.PSName2 = replaceElement(idx + 1, self.PSName2, c2)
                 if (idx == 6) and (self.PSName2 == self.PSName1):
@@ -555,11 +601,11 @@ class RDSParser:
             self.textAB = block2 & 0x0010
             idx = 4 * (block2 & 0x000F)
             if idx < self.lastTextIDX:
-                if (self.sendText):
+                if self.sendText:
                     self.sendText(self.RDSText)
             self.lastTextIDX = idx
 
-            if (self.textAB != self.last_textAB):
+            if self.textAB != self.last_textAB:
                 # Clear buffer
                 self.last_textAB = self.textAB
                 self.RDSText = " " * 66
@@ -585,7 +631,12 @@ class RDSParser:
             # Check if function sendTime was set, and chek if the time is different from last time
             if (self.sendTime) and (mins != self.lastMinutes1):
                 # Checks if time appeared in the last two instances - To avoid noise
-                if self.lastMinutes1 + 1 == mins or self.lastMinutes2 + 1 == mins or self.lastMinutes1 == 0 or self.lastMinutes2 == 0:
+                if (
+                    self.lastMinutes1 + 1 == mins
+                    or self.lastMinutes2 + 1 == mins
+                    or self.lastMinutes1 == 0
+                    or self.lastMinutes2 == 0
+                ):
                     self.lastMinutes2 = self.lastMinutes1
                     self.lastMinutes1 = mins
                     self.sendTime(mins // 60, mins % 60)

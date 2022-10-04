@@ -18,15 +18,7 @@ from digitalio import DigitalInOut, Direction, Pull
 displayio.release_displays()
 oled_reset = board.D9
 
-presets = [  # Preset stations
-    8930,
-    9510,
-    9710,
-    9950,
-    10100,
-    10110,
-    10650
-]
+presets = [8930, 9510, 9710, 9950, 10100, 10110, 10650]  # Preset stations
 i_sidx = 3  # Starting at station with index 3
 
 # Initialize i2c bus
@@ -45,7 +37,9 @@ rds = tinkeringtech_rda5807m.RDSParser()
 
 # Display initialization
 initial_time = time.monotonic()  # Initial time - used for timing
-toggle_frequency = 5  # Frequency at which the text changes between radio frequnecy and rds in seconds
+toggle_frequency = (
+    5  # Frequency at which the text changes between radio frequnecy and rds in seconds
+)
 display_bus = displayio.I2CDisplay(i2c, device_address=0x3C)
 display = adafruit_displayio_ssd1306.SSD1306(display_bus, width=128, height=32)
 rdstext = "No rds data"
@@ -72,14 +66,18 @@ def drawText(text):
     # Check that lines are not empty
     if not line1.strip() or not line2.strip():
         warning = "Unclear rds data"
-        text_area_1 = label.Label(terminalio.FONT, text=warning, color=0xFFFF00, x=5, y=5)
+        text_area_1 = label.Label(
+            terminalio.FONT, text=warning, color=0xFFFF00, x=5, y=5
+        )
         splash.append(text_area_1)
     else:
         # Line 1
         text_area_1 = label.Label(terminalio.FONT, text=line1, color=0xFFFF00, x=5, y=5)
         splash.append(text_area_1)
         # Line 2
-        text_area_2 = label.Label(terminalio.FONT, text=line2, color=0xFFFF00, x=5, y=20)
+        text_area_2 = label.Label(
+            terminalio.FONT, text=line2, color=0xFFFF00, x=5, y=20
+        )
         splash.append(text_area_2)
 
 
@@ -88,6 +86,8 @@ def textHandle(rdsText):
     global rdstext
     rdstext = rdsText
     print(rdsText)
+
+
 rds.attachTextCallback(textHandle)
 
 
@@ -204,19 +204,19 @@ runSerialCommand("?", 0)
 print("-> ", end="")
 
 while True:
-        serial_read()
-        radio.checkRDS()
-        new_time = time.monotonic()
-        if (new_time - initial_time) > toggle_frequency:
-            print_rds = not print_rds
-            if print_rds:
-                if rdstext == "":
-                    drawText("No rds data")
-                else:
-                    if len(rdstext.split(" ")) > 1:
-                        drawText(rdstext)
-                    else:
-                        drawText("Unclear rds data")
+    serial_read()
+    radio.checkRDS()
+    new_time = time.monotonic()
+    if (new_time - initial_time) > toggle_frequency:
+        print_rds = not print_rds
+        if print_rds:
+            if rdstext == "":
+                drawText("No rds data")
             else:
-                drawText(radio.formatFreq())
-            initial_time = new_time
+                if len(rdstext.split(" ")) > 1:
+                    drawText(rdstext)
+                else:
+                    drawText("Unclear rds data")
+        else:
+            drawText(radio.formatFreq())
+        initial_time = new_time
