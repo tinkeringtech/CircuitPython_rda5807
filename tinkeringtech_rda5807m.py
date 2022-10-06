@@ -173,6 +173,7 @@ class Radio:
         self.tune()  # Apply volume and frequency
 
     def setup(self):
+        """docstring."""
         # Initialize registers
         self.registers[RADIO_REG_CHIPID] = 0x58
         self.registers[RADIO_REG_CTRL] = (
@@ -202,12 +203,14 @@ class Radio:
         self.mute = False
 
     def tune(self):
+        """docstring."""
         # Tunes radio to current frequency and volume
         self.set_freq(self.frequency)
         self.set_volume(self.volume)
         self.tuned = True
 
     def set_freq(self, freq):
+        """docstring."""
         # Sets frequency to freq
         if freq < self.freq_low:
             freq = self.freq_low
@@ -246,6 +249,7 @@ class Radio:
             self.rds_ready = False
 
     def get_freq(self):
+        """docstring."""
         # Read register RA
         self.write_bytes(bytes([RADIO_REG_RA]))
         self.registers[RADIO_REG_RA] = self.read16()
@@ -256,6 +260,7 @@ class Radio:
         return self.frequency
 
     def format_freq(self):
+        """docstring."""
         # Formats the current frequency for better readabilitiy
         freq = self.frequency
 
@@ -268,6 +273,7 @@ class Radio:
         return ("".join(sfreq)) + " Mhz"
 
     def set_band(self, band):
+        """docstring."""
         # Changes bands to FM or FMWORLD
         self.band = band
         if band == "FM":
@@ -278,12 +284,14 @@ class Radio:
         self.save_register(RADIO_REG_CHAN)
 
     def term(self):
+        """docstring."""
         # Terminates all receiver functions
         self.set_volume(0)
         self.registers[RADIO_REG_CTRL] = 0x0000
         self.save_registers
 
     def set_bass_boost(self, switch_on):
+        """docstring."""
         # Switches bass boost to true or false
         self.bass_boost = switch_on
         reg_ctrl = self.registers[RADIO_REG_CTRL]
@@ -295,6 +303,7 @@ class Radio:
         self.save_register(RADIO_REG_CTRL)
 
     def set_mono(self, switch_on):
+        """docstring."""
         # Switches mono to 0 or 1
         self.mono = switch_on
         self.registers[RADIO_REG_CTRL] = self.registers[RADIO_REG_CTRL] & (
@@ -311,6 +320,7 @@ class Radio:
         self.save_register(RADIO_REG_CTRL)
 
     def set_mute(self, switch_on):
+        """docstring."""
         # Switches mute off or on
         self.mute = switch_on
         if switch_on:
@@ -324,6 +334,7 @@ class Radio:
         self.save_register(RADIO_REG_CTRL)
 
     def set_soft_mute(self, switch_on):
+        """docstring."""
         # Switches soft mute off or on
         self.soft_mute = switch_on
         if switch_on:
@@ -337,6 +348,7 @@ class Radio:
         self.save_register(RADIO_REG_R4)
 
     def soft_reset(self):
+        """docstring."""
         # Soft reset chip
         self.registers[RADIO_REG_CTRL] = (
             self.registers[RADIO_REG_CTRL] | RADIO_REG_CTRL_RESET
@@ -349,6 +361,7 @@ class Radio:
         self.save_register(RADIO_REG_CTRL)
 
     def seek_up(self):
+        """docstring."""
         # Start seek mode upwards
         self.registers[RADIO_REG_CTRL] = (
             self.registers[RADIO_REG_CTRL] | RADIO_REG_CTRL_SEEKUP
@@ -367,6 +380,7 @@ class Radio:
         self.save_register(RADIO_REG_CTRL)
 
     def seek_down(self):
+        """docstring."""
         # Start seek mode downwards
         self.registers[RADIO_REG_CTRL] = self.registers[RADIO_REG_CTRL] & (
             ~RADIO_REG_CTRL_SEEKUP
@@ -385,6 +399,7 @@ class Radio:
         self.save_register(RADIO_REG_CTRL)
 
     def set_volume(self, volume):
+        """docstring."""
         # Sets the volume
         if volume > self.maxvolume:
             volume = self.maxvolume
@@ -396,6 +411,7 @@ class Radio:
         self.save_register(RADIO_REG_VOL)
 
     def check_rds(self):
+        """docstring."""
         # Check for rds data
         self.check_threshold()
         if self.send_rds and self.rds_ready:
@@ -436,6 +452,7 @@ class Radio:
                     )
 
     def check_threshold(self):
+        """docstring."""
         # Check every interval if the signal strength is strong enough for receiving rds data
         current_time = time.monotonic()
         if (current_time - self.initial) > self.interval:
@@ -446,6 +463,7 @@ class Radio:
             self.initial = current_time
 
     def get_rssi(self):
+        """docstring."""
         # Get the current signal strength
         self.write_bytes(bytes([RADIO_REG_RB]))
         self.registers[RADIO_REG_RB] = self.read16()
@@ -453,6 +471,7 @@ class Radio:
         return self.rssi
 
     def get_radio_info(self):
+        """docstring."""
         # Reads info from chip and saves it into virtual memory
         self.read_registers()
         if self.registers[RADIO_REG_RA] & RADIO_REG_RA_RDS:
@@ -464,6 +483,7 @@ class Radio:
             self.mono = True
 
     def save_register(self, reg_num):
+        """docstring."""
         # Write register from memory to receiver
         reg_val = self.registers[reg_num]  # 16 bit value in list
         reg_val_1 = reg_val >> 8
@@ -474,14 +494,17 @@ class Radio:
         )  # reg_num is a register address
 
     def write_bytes(self, values):
+        """docstring."""
         with self.board:
             self.board.write(values)
 
     def save_registers(self):
+        """docstring."""
         for i in range(2, 7):
             self.save_register(i)
 
     def read16(self):
+        """docstring."""
         # Reads two bytes, returns as one 16 bit integer
         with self.board:
             result = bytearray(2)
@@ -489,6 +512,7 @@ class Radio:
         return result[0] * 256 + result[1]
 
     def read_registers(self):
+        """docstring."""
         # Reads register from chip to virtual memory
         with self.board:
             self.board.write(bytes([RADIO_REG_RA]))
@@ -497,6 +521,7 @@ class Radio:
 
 
 def replace_element(index, text, newchar):
+    """docstring."""
     # Replaces char in string at index with newchar
     newlist = list(text)
     if type(newchar) is int:
