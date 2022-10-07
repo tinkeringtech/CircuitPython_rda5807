@@ -47,7 +47,7 @@ rdstext = "No rds data"
 
 def drawText(text):
     # Write text on display
-    global display
+    #global display
     # Make the display context
     splash = displayio.Group()
     display.show(splash)
