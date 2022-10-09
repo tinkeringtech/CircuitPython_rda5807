@@ -10,29 +10,23 @@ import displayio
 import terminalio
 from adafruit_bus_device.i2c_device import I2CDevice
 from adafruit_display_text import label
-import adafruit_displayio_ssd1306
 import tinkeringtech_rda5807m
-from digitalio import DigitalInOut, Direction, Pull
-
-# Display
-displayio.release_displays()
-oled_reset = board.D9
 
 presets = [8930, 9510, 9710, 9950, 10100, 10110, 10650]  # Preset stations
 i_sidx = 3  # Starting at station with index 3
 
 # Initialize i2c bus
-i2c = busio.I2C(board.SCL1, board.SDA1)
+i2c = busio.I2C(board.SCL, board.SDA)
 
 # Receiver i2c communication
 address = 0x11
 radio_i2c = I2CDevice(i2c, address)
 
-vol = 0  # Default volume
+vol = 3  # Default volume
 band = "FM"
 
 radio = tinkeringtech_rda5807m.Radio(radio_i2c, presets[i_sidx], vol)
-radio.setBand(band)  # Minimum frequency - 87 Mhz, max - 108 Mhz
+radio.set_band(band)  # Minimum frequency - 87 Mhz, max - 108 Mhz
 rds = tinkeringtech_rda5807m.RDSParser()
 
 # Display initialization
@@ -40,8 +34,7 @@ initial_time = time.monotonic()  # Initial time - used for timing
 toggle_frequency = (
     5  # Frequency at which the text changes between radio frequnecy and rds in seconds
 )
-display_bus = displayio.I2CDisplay(i2c, device_address=0x3C)
-display = adafruit_displayio_ssd1306.SSD1306(display_bus, width=128, height=32)
+
 rdstext = "No rds data"
 
 
@@ -88,7 +81,7 @@ def textHandle(rdsText):
     print(rdsText)
 
 
-rds.attachTextCallback(textHandle)
+rds.attach_text_callback(textHandle)
 
 
 # Read input from serial
@@ -110,7 +103,6 @@ def runSerialCommand(cmd, value=0):
     # Executes a command
     # Starts with a character, and optionally followed by an integer, if required
     global i_sidx
-    global presets
     if cmd == "?":
         print("? help")
         print("+ increase volume")
@@ -198,25 +190,13 @@ def runSerialCommand(cmd, value=0):
 
 
 print_rds = False
-radio.sendRDS = rds.processData
+radio.send_rds = rds.process_data
 runSerialCommand("?", 0)
 
 print("-> ", end="")
 
 while True:
     serial_read()
-    radio.checkRDS()
+    radio.check_rds()
     new_time = time.monotonic()
-    if (new_time - initial_time) > toggle_frequency:
-        print_rds = not print_rds
-        if print_rds:
-            if rdstext == "":
-                drawText("No rds data")
-            else:
-                if len(rdstext.split(" ")) > 1:
-                    drawText(rdstext)
-                else:
-                    drawText("Unclear rds data")
-        else:
-            drawText(radio.formatFreq())
-        initial_time = new_time
+    serial_read()
