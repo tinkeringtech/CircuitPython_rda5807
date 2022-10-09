@@ -564,7 +564,7 @@ class RDSParser:
         self.last_minutes_1 = 0
         self.last_minutes_2 = 0
         # Previous index
-        self.last_text_idx = "tonga"
+        self.last_text_idx = 0
         # Functions initialization
         self.send_service_name = None
         self.send_text = None
