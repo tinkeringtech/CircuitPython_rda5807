@@ -566,6 +566,7 @@ class RDSParser:
         self.program_service_name = "        "
 
     def init(self):
+        """docstring."""
         self.rds_text = " " * 66
         self.ps_name1 = "--------"
         self.ps_name2 = self.ps_name1
@@ -573,15 +574,19 @@ class RDSParser:
         self.last_text_idx = 0
 
     def attach_service_name_callback(self, new_function):
+        """docstring."""
         self.send_service_name = new_function
 
     def attach_text_callback(self, new_function):
+        """docstring."""
         self.send_text = new_function
 
     def attach_time_callback(self, new_function):
+        """docstring."""
         self.send_time = new_function
 
     def process_data(self, block1, block2, block3, block4):
+        """docstring."""
 
         # Analyzing block 1
         if block1 == 0:
