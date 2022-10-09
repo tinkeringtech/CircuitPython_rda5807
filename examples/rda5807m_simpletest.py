@@ -6,7 +6,6 @@ import time
 import board
 import busio
 import supervisor
-import terminalio
 from adafruit_bus_device.i2c_device import I2CDevice
 import tinkeringtech_rda5807m
 
