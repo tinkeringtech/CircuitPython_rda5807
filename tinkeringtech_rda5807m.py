@@ -144,7 +144,7 @@ class Radio:
     rssi = 0
 
     # Set default frequency and volume
-    def __init__(self, board, frequency=10000, volume=1):
+    def __init__(self, board, rds_parser, frequency=10000, volume=1):
         self.board = board
         self.frequency = frequency
 
@@ -158,7 +158,8 @@ class Radio:
         self.mono = False
         self.rds = False
         self.tuned = False
-        self.send_rds = False
+        self.rds_parser = rds_parser
+        self.send_rds = rds_parser.process_data
 
         # Is the signal strong enough to get rds?
         self.rds_ready = False
@@ -522,10 +523,6 @@ class Radio:
             self.board.write(bytes([RADIO_REG_RA]))
             for i in range(6):
                 self.registers[0xA + i] = self.read16()
-
-    def attach_send_rds_callback(self, new_function):
-        """docstring."""
-        self.send_rds = new_function
 
 
 def replace_element(index, text, newchar):

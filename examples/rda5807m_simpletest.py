@@ -19,13 +19,9 @@ i2c = busio.I2C(board.SCL, board.SDA)
 
 # Receiver i2c communication
 address = 0x11
-radio_i2c = I2CDevice(i2c, address)
-
 vol = 3  # Default volume
 band = "FM"
 
-radio = tinkeringtech_rda5807m.Radio(radio_i2c, presets[i_sidx], vol)
-radio.set_band(band)  # Minimum frequency - 87 Mhz, max - 108 Mhz
 rds = tinkeringtech_rda5807m.RDSParser()
 
 # Display initialization
@@ -44,6 +40,11 @@ def textHandle(rdsText):
 
 
 rds.attach_text_callback(textHandle)
+
+# Initialize the radio classes for use.
+radio_i2c = I2CDevice(i2c, address)
+radio = tinkeringtech_rda5807m.Radio(radio_i2c, rds, presets[i_sidx], vol)
+radio.set_band(band)  # Minimum frequency - 87 Mhz, max - 108 Mhz
 
 # Read input from serial
 def serial_read():
@@ -151,7 +152,6 @@ def runSerialCommand(cmd, value=0):
 
 
 print_rds = False
-radio.attach_send_rds_callback(rds.process_data)
 runSerialCommand("?", 0)
 
 print("-> ", end="")
