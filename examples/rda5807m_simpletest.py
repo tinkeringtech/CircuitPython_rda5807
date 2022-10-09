@@ -6,10 +6,8 @@ import time
 import board
 import busio
 import supervisor
-import displayio
 import terminalio
 from adafruit_bus_device.i2c_device import I2CDevice
-from adafruit_display_text import label
 import tinkeringtech_rda5807m
 
 presets = [8930, 9510, 9710, 9950, 10100, 10110, 10650]  # Preset stations
