@@ -2,6 +2,8 @@
 # SPDX-FileCopyrightText: Copyright (c) 2022 tinkeringtech for TinkeringTech LLC
 #
 # SPDX-License-Identifier: Unlicense
+
+# pylint: disable=global-statement, too-many-branches, too-many-statements
 import time
 import board
 import busio
@@ -39,6 +41,7 @@ def textHandle(rdsText):
     global rdstext
     rdstext = rdsText
     print(rdsText)
+
 
 rds.attach_text_callback(textHandle)
 
@@ -148,7 +151,7 @@ def runSerialCommand(cmd, value=0):
 
 
 print_rds = False
-radio.send_rds = rds.process_data
+radio.attach_send_rds_callback(rds.process_data)
 runSerialCommand("?", 0)
 
 print("-> ", end="")

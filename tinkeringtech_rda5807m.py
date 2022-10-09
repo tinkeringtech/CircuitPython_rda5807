@@ -90,6 +90,9 @@ RADIO_REG_RDSD = 0x0F
 
 # Radio class definition
 class Radio:
+    # pylint: disable=too-many-instance-attributes
+    # pylint: disable=too-many-public-methods
+
     """
     A class for communicating with the rda5807m chip
 
@@ -138,6 +141,7 @@ class Radio:
     freq_low = 8700
     freq_high = 10800
     freq_steps = 10
+    rssi = 0
 
     # Set default frequency and volume
     def __init__(self, board, frequency=10000, volume=1):
@@ -288,7 +292,7 @@ class Radio:
         # Terminates all receiver functions
         self.set_volume(0)
         self.registers[RADIO_REG_CTRL] = 0x0000
-        self.save_registers
+        self.save_registers()
 
     def set_bass_boost(self, switch_on):
         """docstring."""
@@ -519,22 +523,29 @@ class Radio:
             for i in range(6):
                 self.registers[0xA + i] = self.read16()
 
+    def attach_send_rds_callback(self, new_function):
+        """docstring."""
+        self.send_rds = new_function
+
 
 def replace_element(index, text, newchar):
     """docstring."""
     # Replaces char in string at index with newchar
     newlist = list(text)
-    if type(newchar) is int:
-        if newchar < 127 and newchar > 31:
+    if isinstance(newchar, int):
+        newlist[index] = " "
+        # this used to be an AND but that would make no sense. Changed to OR
+        if newchar < 127 or newchar > 31:
             newlist[index] = chr(newchar)
-        else:
-            newlist[index] = " "
     else:
         newlist[index] = newchar
     return "".join(newlist)
 
 
 class RDSParser:
+    # pylint: disable=too-many-instance-attributes
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-statements
     """
     A class used for parsing rds data into readable strings
     """
@@ -603,11 +614,7 @@ class RDSParser:
         self.rds_tp = block2 & 0x0400
         self.rds_pty = block2 & 0x0400
 
-        # rdsGroupType cases
-        if rds_group_type == 0x0A:
-            pass
-
-        elif rds_group_type == 0x0B:
+        if rds_group_type == 0x0B:
             # Data received is part of Service Station name
             idx = 2 * (block2 & 0x0003)
 
@@ -618,12 +625,15 @@ class RDSParser:
             if (self.ps_name1[idx] == cdata_1) and (self.ps_name1[idx + 1] == cdata_2):
                 self.ps_name2 = replace_element(idx, self.ps_name2, cdata_1)
                 self.ps_name2 = replace_element(idx + 1, self.ps_name2, cdata_2)
-                if (idx == 6) and (self.ps_name2 == self.ps_name1):
-                    if self.program_service_name != self.ps_name2:
-                        # Publish station name
-                        self.program_service_name = self.ps_name2
-                        if self.send_service_name:
-                            self.send_service_name(self.program_service_name)
+                if (
+                    idx == 6
+                    and self.ps_name2 == self.ps_name1
+                    and self.program_service_name != self.ps_name2
+                ):
+                    # Publish station name
+                    self.program_service_name = self.ps_name2
+                    if self.send_service_name:
+                        self.send_service_name(self.program_service_name)
 
             if (self.ps_name1[idx] != cdata_1) or (self.ps_name1[idx + 1] != cdata_2):
                 self.ps_name1 = replace_element(idx, self.ps_name1, cdata_1)
@@ -633,9 +643,8 @@ class RDSParser:
             time.sleep(0.1)
             self.text_ab = block2 & 0x0010
             idx = 4 * (block2 & 0x000F)
-            if idx < self.last_text_idx:
-                if self.send_text:
-                    self.send_text(self.rds_text)
+            if idx < self.last_text_idx and self.send_text:
+                self.send_text(self.rds_text)
             self.last_text_idx = idx
 
             if self.text_ab != self.last_text_ab:
@@ -673,3 +682,5 @@ class RDSParser:
                     self.last_minutes_2 = self.last_minutes_1
                     self.last_minutes_1 = mins
                     self.send_time(mins // 60, mins % 60)
+
+        return 0
