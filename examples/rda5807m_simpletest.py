@@ -37,52 +37,13 @@ toggle_frequency = (
 
 rdstext = "No rds data"
 
-
-def drawText(text):
-    # Write text on display
-    #global display
-    # Make the display context
-    splash = displayio.Group()
-    display.show(splash)
-
-    color_bitmap = displayio.Bitmap(128, 32, 1)
-    color_palette = displayio.Palette(1)
-    color_palette[0] = 0x000000  # Black
-
-    bg_sprite = displayio.TileGrid(color_bitmap, pixel_shader=color_palette, x=0, y=0)
-    splash.append(bg_sprite)
-
-    # Split text into two lines
-    temp = text.split(" ")
-    line1 = temp[0]
-    line2 = " ".join(temp[1:])
-    # Check that lines are not empty
-    if not line1.strip() or not line2.strip():
-        warning = "Unclear rds data"
-        text_area_1 = label.Label(
-            terminalio.FONT, text=warning, color=0xFFFF00, x=5, y=5
-        )
-        splash.append(text_area_1)
-    else:
-        # Line 1
-        text_area_1 = label.Label(terminalio.FONT, text=line1, color=0xFFFF00, x=5, y=5)
-        splash.append(text_area_1)
-        # Line 2
-        text_area_2 = label.Label(
-            terminalio.FONT, text=line2, color=0xFFFF00, x=5, y=20
-        )
-        splash.append(text_area_2)
-
-
 # RDS text handle
 def textHandle(rdsText):
     global rdstext
     rdstext = rdsText
     print(rdsText)
 
-
 rds.attach_text_callback(textHandle)
-
 
 # Read input from serial
 def serial_read():
