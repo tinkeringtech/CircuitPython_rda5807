@@ -73,7 +73,7 @@ def runSerialCommand(cmd, value=0):
         print("< previous preset")
         print(". scan up ")
         print(", scan down ")
-        print("f direct frequency input")
+        print("f direct frequency input e.g 99.50 MHz is f 9950 or 101.10 MHz is f 10110")
         print("i station status")
         print("s mono/stereo mode")
         print("b bass boost")
@@ -86,51 +86,51 @@ def runSerialCommand(cmd, value=0):
     elif cmd == "+":
         v = radio.volume
         if v < 15:
-            radio.setVolume(v + 1)
+            radio.set_volume(v + 1)
     elif cmd == "-":
         v = radio.volume
         if v > 0:
-            radio.setVolume(v - 1)
+            radio.set_volume(v - 1)
 
     # Toggle mute mode
     elif cmd == "u":
-        radio.setMute(not radio.mute)
+        radio.set_mute(not radio.mute)
     # Toggle stereo mode
     elif cmd == "s":
-        radio.setMono(not radio.mono)
+        radio.set_mono(not radio.mono)
     # Toggle bass boost
     elif cmd == "b":
-        radio.setBassBoost(not radio.bassBoost)
+        radio.set_bass_boost(not radio.bass_boost)
 
     # Frequency control
     elif cmd == ">":
         # Goes to the next preset station
         if i_sidx < (len(presets) - 1):
             i_sidx = i_sidx + 1
-            radio.setFreq(presets[i_sidx])
+            radio.set_freq(presets[i_sidx])
     elif cmd == "<":
         # Goes to the previous preset station
         if i_sidx > 0:
             i_sidx = i_sidx - 1
-            radio.setFreq(presets[i_sidx])
+            radio.set_freq(presets[i_sidx])
 
     # Set frequency
     elif cmd == "f":
-        radio.setFreq(value)
+        radio.set_freq(value)
 
     # Seek up/down
     elif cmd == ".":
-        radio.seekUp()
+        radio.seek_up()
     elif cmd == ",":
-        radio.seekDown()
+        radio.seek_down()
 
     # Display current signal strength
     elif cmd == "r":
-        print("RSSI: " + str(radio.getRssi()))
+        print("RSSI: " + str(radio.get_rssi()))
 
     # Soft reset chip
     elif cmd == "e":
-        radio.softReset()
+        radio.soft_reset()
 
     # Not in help
     elif cmd == "!":
@@ -138,16 +138,16 @@ def runSerialCommand(cmd, value=0):
 
     elif cmd == "i":
         # Display chip info
-        s = radio.formatFreq()
+        s = radio.format_freq()
         print("Station: " + s)
         print("Radio info: ")
         print("RDS -> " + str(radio.rds))
         print("TUNED -> " + str(radio.tuned))
         print("STEREO -> " + str(not radio.mono))
         print("Audio info: ")
-        print("BASS -> " + str(radio.bassBoost))
+        print("BASS -> " + str(radio.bass_boost))
         print("MUTE -> " + str(radio.mute))
-        print("SOFTMUTE -> " + str(radio.softMute))
+        print("SOFTMUTE -> " + str(radio.soft_mute))
         print("VOLUME -> " + str(radio.volume))
 
 
