@@ -174,7 +174,6 @@ class Radio:
 
         # Functions saves register values to virtual registers, sets the basic frequency and volume
         self.setup()
-        print("Got to point 1!")
         self.tune()  # Apply volume and frequency
 
     def setup(self):
