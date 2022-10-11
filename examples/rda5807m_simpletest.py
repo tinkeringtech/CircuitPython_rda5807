@@ -73,7 +73,9 @@ def runSerialCommand(cmd, value=0):
         print("< previous preset")
         print(". scan up ")
         print(", scan down ")
-        print("f direct frequency input e.g 99.50 MHz is f 9950 or 101.10 MHz is f 10110")
+        print(
+            "f direct frequency input e.g 99.50 MHz is f 9950 or 101.10 MHz is f 10110"
+        )
         print("i station status")
         print("s mono/stereo mode")
         print("b bass boost")
