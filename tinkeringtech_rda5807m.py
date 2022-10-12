@@ -95,38 +95,6 @@ class Radio:
 
     """
     A class for communicating with the rda5807m chip
-    ...
-
-    Attributes
-    ----------
-    registers : list
-        virtual registers
-    address : int
-        chip's address
-    maxvolume : int
-        maximum volume
-    freq_low, freq_high, freq_steps : int
-        min and max frequency for FM band, and frequency steps
-    board : busio.i2c object
-        used for i2c communication
-    frequency : int
-        current chip frequency
-    volume : int
-        current chip volume
-    bass_boost : boolean
-        toggle bass boost on the chip
-    mute : boolean
-        toggle mute/unmute
-    soft_mute : boolean
-        toggle soft mute (mute if signal strength too low)
-    mono : boolean
-        toggle stereo mode
-    rds : boolean
-        toggle rds
-    tuned : boolean
-        is chip tuned
-    band : string
-        selected band (FM or FMWORLD)
     """
 
     # Initialize virtual registers
