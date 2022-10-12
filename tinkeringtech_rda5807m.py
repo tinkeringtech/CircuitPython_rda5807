@@ -95,8 +95,7 @@ class Radio:
 
     """
     A class for communicating with the rda5807m chip
-
-    """
+    ...
 
     Attributes
     ----------
