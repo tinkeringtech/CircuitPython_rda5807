@@ -1,4 +1,3 @@
-# SPDX-FileCopyrightText: 2017 Scott Shawcroft, written for Adafruit Industries
 # SPDX-FileCopyrightText: Copyright (c) 2022 tinkeringtech for TinkeringTech LLC
 #
 # SPDX-License-Identifier: Unlicense
@@ -6,16 +5,17 @@
 # pylint: disable=global-statement, too-many-branches, too-many-statements
 import time
 import board
-import busio
 import supervisor
 from adafruit_bus_device.i2c_device import I2CDevice
 import tinkeringtech_rda5807m
 
-presets = [8930, 9510, 9710, 9950, 10100, 10110, 10650]  # Preset stations
+# Preset stations. 8930 means 89.3 MHz, etc.
+presets = [8930, 9510, 9710, 9950, 10100, 10110, 10650]
 i_sidx = 3  # Starting at station with index 3
 
 # Initialize i2c bus
-i2c = busio.I2C(board.SCL, board.SDA)
+# If your board does not have STEMMA_I2C(), change as appropriate.
+i2c = board.STEMMA_I2C()
 
 # Receiver i2c communication
 address = 0x11
@@ -25,7 +25,6 @@ band = "FM"
 rds = tinkeringtech_rda5807m.RDSParser()
 
 # Display initialization
-initial_time = time.monotonic()  # Initial time - used for timing
 toggle_frequency = (
     5  # Frequency at which the text changes between radio frequnecy and rds in seconds
 )
@@ -66,23 +65,23 @@ def runSerialCommand(cmd, value=0):
     # Starts with a character, and optionally followed by an integer, if required
     global i_sidx
     if cmd == "?":
-        print("? help")
-        print("+ increase volume")
-        print("- decrease volume")
-        print("> next preset")
-        print("< previous preset")
-        print(". scan up ")
-        print(", scan down ")
         print(
-            "f direct frequency input e.g 99.50 MHz is f 9950 or 101.10 MHz is f 10110"
+            """\
+? help
++ increase volume
+- decrease volume
+> next preset
+< previous preset
+. scan up
+, scan down
+f direct frequency input; e.g., 99.50 MHz is f 9950, 101.10 MHz is f 10110
+i station statuss mono/stereo mode
+b bass boost
+u mute/unmute
+r get rssi data
+e softreset chip
+q stops the program"""
         )
-        print("i station status")
-        print("s mono/stereo mode")
-        print("b bass boost")
-        print("u mute/unmute")
-        print("r get rssi data")
-        print("e softreset chip")
-        print("q stops the program")
 
     # Volume and audio control
     elif cmd == "+":
@@ -128,7 +127,7 @@ def runSerialCommand(cmd, value=0):
 
     # Display current signal strength
     elif cmd == "r":
-        print("RSSI: " + str(radio.get_rssi()))
+        print("RSSI:", radio.get_rssi())
 
     # Soft reset chip
     elif cmd == "e":
@@ -141,16 +140,16 @@ def runSerialCommand(cmd, value=0):
     elif cmd == "i":
         # Display chip info
         s = radio.format_freq()
-        print("Station: " + s)
-        print("Radio info: ")
-        print("RDS -> " + str(radio.rds))
-        print("TUNED -> " + str(radio.tuned))
-        print("STEREO -> " + str(not radio.mono))
-        print("Audio info: ")
-        print("BASS -> " + str(radio.bass_boost))
-        print("MUTE -> " + str(radio.mute))
-        print("SOFTMUTE -> " + str(radio.soft_mute))
-        print("VOLUME -> " + str(radio.volume))
+        print("Station: ", s)
+        print("Radio info:")
+        print("RDS ->", radio.rds)
+        print("TUNED ->", radio.tuned)
+        print("STEREO ->", not radio.mono)
+        print("Audio info:")
+        print("BASS ->", radio.bass_boost)
+        print("MUTE ->", radio.mute)
+        print("SOFTMUTE ->", radio.soft_mute)
+        print("VOLUME ->", radio.volume)
 
 
 print_rds = False
