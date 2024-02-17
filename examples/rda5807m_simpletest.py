@@ -1,26 +1,31 @@
 # SPDX-FileCopyrightText: Copyright (c) 2022 tinkeringtech for TinkeringTech LLC
+# SPDX-FileCopyrightText: 2024 Norihiko Nakabayashi, modified for Japanese and World users
 #
 # SPDX-License-Identifier: Unlicense
 
 # pylint: disable=global-statement, too-many-branches, too-many-statements
 import time
 import board
+import busio
 import supervisor
 from adafruit_bus_device.i2c_device import I2CDevice
 import tinkeringtech_rda5807m
 
 # Preset stations. 8930 means 89.3 MHz, etc.
-presets = [8930, 9510, 9710, 9950, 10100, 10110, 10650]
+# presets = [8930, 9510, 9710, 9950, 10100, 10110, 10650]
+# Preset stations for Tokyo, Japan.
+presets = [7800, 7950, 8000, 8130, 8250, 8470, 8970, 9050, 9160, 9240, 9300]
 i_sidx = 3  # Starting at station with index 3
 
 # Initialize i2c bus
 # If your board does not have STEMMA_I2C(), change as appropriate.
-i2c = board.STEMMA_I2C()
+# i2c = board.STEMMA_I2C()
+i2c = busio.I2C(board.GP1, board.GP0)
 
 # Receiver i2c communication
 address = 0x11
 vol = 3  # Default volume
-band = "FM"
+band = "FMWORLD"  # "FM" or "FMWORLD
 
 rds = tinkeringtech_rda5807m.RDSParser()
 
@@ -30,6 +35,7 @@ toggle_frequency = (
 )
 
 rdstext = "No rds data"
+
 
 # RDS text handle
 def textHandle(rdsText):
@@ -42,8 +48,9 @@ rds.attach_text_callback(textHandle)
 
 # Initialize the radio classes for use.
 radio_i2c = I2CDevice(i2c, address)
-radio = tinkeringtech_rda5807m.Radio(radio_i2c, rds, presets[i_sidx], vol)
-radio.set_band(band)  # Minimum frequency - 87 Mhz, max - 108 Mhz
+radio = tinkeringtech_rda5807m.Radio(radio_i2c, rds, band, presets[i_sidx], vol)
+# radio.set_band(band)  # Minimum frequency - 87 Mhz, max - 108 Mhz
+
 
 # Read input from serial
 def serial_read():

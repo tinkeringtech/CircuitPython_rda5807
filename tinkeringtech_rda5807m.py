@@ -1,5 +1,6 @@
 # SPDX-FileCopyrightText: 2017 Scott Shawcroft, written for Adafruit Industries
 # SPDX-FileCopyrightText: Copyright (c) 2022 tinkeringtech for TinkeringTech LLC
+# SPDX-FileCopyrightText: 2024 Norihiko Nakabayashi, modified for Japanese and World users
 #
 # SPDX-License-Identifier: MIT
 """
@@ -100,14 +101,8 @@ class Radio:
     address = 0x11
     maxvolume = 15
 
-    # FMWORLD Band
-    freq_low = 8700
-    freq_high = 10800
-    freq_steps = 10
-    rssi = 0
-
     # Set default frequency and volume
-    def __init__(self, board, rds_parser, frequency=10000, volume=1):
+    def __init__(self, board, rds_parser, band="FM", frequency=10000, volume=1):
         self.board = board
         self.frequency = frequency
 
@@ -130,10 +125,18 @@ class Radio:
         self.interval = 10  # Used for timing rssi checks - in seconds
         self.initial = time.monotonic()  # Time since boot
 
-        # Band - Default FMWORLD
+        # Band - Default FM
         # 1. FM
         # 2. FMWORLD
-        self.band = "FM"
+        self.band = band
+        # FMWORLD Band
+        if band == "FM":
+            self.freq_low = 8700
+        else:
+            self.freq_low = 7600
+        self.freq_high = 10800
+        self.freq_steps = 10
+        self.rssi = 0
 
         # Functions saves register values to virtual registers, sets the basic frequency and volume
         self.setup()
@@ -186,7 +189,15 @@ class Radio:
         self.frequency = freq
         new_channel = (freq - self.freq_low) // 10
 
-        reg_channel = RADIO_REG_CHAN_TUNE  # Enable tuning
+        # Changes bands to FM or FMWORLD
+        band = self.band
+        if band == "FM":
+            r = RADIO_REG_CHAN_BAND_FM
+        else:
+            r = RADIO_REG_CHAN_BAND_FMWORLD
+        reg_channel = (
+            r | RADIO_REG_CHAN_SPACE_100 | RADIO_REG_CHAN_TUNE
+        )  # Enable tuning
         reg_channel = reg_channel | (new_channel << 6)
 
         # Enable output, unmute
@@ -200,6 +211,7 @@ class Radio:
 
         # Save frequency to register
         self.registers[RADIO_REG_CHAN] = reg_channel
+
         self.save_register(RADIO_REG_CHAN)
         time.sleep(0.2)
 
@@ -230,14 +242,16 @@ class Radio:
         """docstring."""
         # Formats the current frequency for better readabilitiy
         freq = self.frequency
-
+        """
         sfreq = str(freq)
         sfreq = list(sfreq)
         last_two = sfreq[-2:]
         sfreq[-2] = "."
         sfreq[-1] = last_two[0]
         sfreq.append(last_two[1])
-        return ("".join(sfreq)) + " Mhz"
+        return ("".join(sfreq)) + " MHz"
+        """
+        return "{:.1f} MHz".format(freq / 100)
 
     def set_band(self, band):
         """docstring."""
@@ -434,7 +448,7 @@ class Radio:
         # Get the current signal strength
         self.write_bytes(bytes([RADIO_REG_RB]))
         self.registers[RADIO_REG_RB] = self.read16()
-        self.rssi = self.registers[RADIO_REG_RB] >> 10
+        self.rssi = self.registers[RADIO_REG_RB] >> 9  # 10 -> 9
         return self.rssi
 
     def get_radio_info(self):
@@ -443,7 +457,7 @@ class Radio:
         self.read_registers()
         if self.registers[RADIO_REG_RA] & RADIO_REG_RA_RDS:
             self.rds = True
-        self.rssi = self.registers[RADIO_REG_RB] >> 10
+        self.rssi = self.registers[RADIO_REG_RB] >> 9  # 10 -> 9
         if self.registers[RADIO_REG_RB] & RADIO_REG_RB_FMTRUE:
             self.tuned = True
         if self.registers[RADIO_REG_CTRL] & RADIO_REG_CTRL_MONO:
